@@ -1,5 +1,5 @@
-$(OBJECTS_DIR)/Numerics.C.dep: \
-Numerics.C \
+$(OBJECTS_DIR)/MyUQ.C.dep: \
+MyUQ.C \
 $(WM_PROJECT_DIR)/src/OpenFOAM/lnInclude/tensor.H \
 $(WM_PROJECT_DIR)/src/OpenFOAM/lnInclude/Tensor.H \
 $(WM_PROJECT_DIR)/src/OpenFOAM/lnInclude/MatrixSpace.H \
@@ -148,6 +148,9 @@ $(WM_PROJECT_DIR)/src/OpenFOAM/lnInclude/vector.H \
 $(WM_PROJECT_DIR)/src/OpenFOAM/lnInclude/sphericalTensor.H \
 $(WM_PROJECT_DIR)/src/OpenFOAM/lnInclude/Identity.H \
 $(WM_PROJECT_DIR)/src/OpenFOAM/lnInclude/symmTensor.H \
+$(WM_PROJECT_DIR)/src/OpenFOAM/lnInclude/triad.H \
+$(WM_PROJECT_DIR)/src/OpenFOAM/lnInclude/triadI.H \
+MyUQ.H \
 Numerics.H \
 
 

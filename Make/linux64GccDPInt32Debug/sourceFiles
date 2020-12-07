@@ -1,5 +1,6 @@
 SOURCE = \
-onlyMainFunction.C \
+main.C \
+MyUQ.C \
 Numerics.C \
 
 # sources
