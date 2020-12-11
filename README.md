@@ -1,3 +1,7 @@
 # UQproject
-Numerics.C and Numerics.H contain the math method to compute matrix with eigenvalues and eigenvectors known
-onlyMainFunction.C and onlyMainFunction.H are about the UQ methodology
+Numerics.C implements the methodology to obtain the original matrix by recomposing its eigenvalues and eigenvectors. Note Numerics.C only deals with 
+one matrix. Therefore this method must be looped through all cells. 
+
+I think there will be a variable returned from perturbedAij() function and stored in a new created variable[celli]. Figure it out later.
+
+But now do not worry about obtaining correct results, just focus on transferring these code into UQkOmegaSST.C.

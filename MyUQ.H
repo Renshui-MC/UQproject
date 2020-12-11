@@ -7,6 +7,7 @@ namespace Foam
 {
 class UQ : public Numerics
 {
+	
 	protected:
 		tensor Rij[5]; //Note 5 means 5 rows for this particular example
 		vector e[5]; 
@@ -14,15 +15,14 @@ class UQ : public Numerics
 		double e_sort[5][3];//the first [] is rwo and the second [] is col. **later might change to double** e_sort = new double* [];**
 		double ev_sole[5][9];
 
-	
+
 	public:
 //*********** Constructor ***************//
 		UQ ();
 
 //********* Member functions ************//
-		void EigenvalueSort ();
+		void EigenSpace ();
 		
-		void Eigenvector ();
 
 		void PerturbedAij ();
 	
