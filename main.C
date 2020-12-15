@@ -10,12 +10,66 @@ using namespace Foam;
 
 int main()
 {
-	
+	symmTensor Aij_OF;
+	symmTensor Aij[5];
+	symmTensor perturbed_Aij[5];
+
+	unsigned short i, x, y;
+	/* newAij could be any name and passed by reference by calling "EigenSpace" function
+	   Note newAij must be exactly same as defined in the Numerics.H otherwise an linking
+	   error will be generated */
+	double** newAij = new double* [3];
+	for (i = 0; i < 3; i++)
+	{
+		newAij[i] = new double [3];
+	} 
+
+
+	Aij[0] = {1, 0, -4, 5, 4, 3};//to read in fields
+
+
+	//read in Reynold stress field
+	Info<<"*********** Start reading anisotropy tensor in each cell **************\n\n";
+	for (i = 1; i < 5; i++)
+	{
+		Aij[i] = {0.6592491, 0.04143975, 0, -0.3259158, 0, -0.333333};
+		//Aij[i] = {1, 1, -1, 1, 2, 0, -1, 0, 5};
+		//Aij[i] = {3, -2, 4, -2, 6, 2, 4, 2, 3};
+	}
+
 	UQ uncertainty;
 
+	for (i = 0; i < 5; i++)
+	{
 
-	uncertainty.EigenSpace();
+	 uncertainty.EigenSpace(Aij_OF, newAij, Aij[i], i);
+	 Info<<"************** celli= "<<i<<" inside MAIN! **************"<<endl;
+	 	for (x = 0; x < 3; x++)
+		{
+			for (y = 0; y < 3; y++)
+			{
+				Info<<"newAij"<<"["<< x <<"]"<<"["<<y<<"]= "<< newAij[x][y]<<endl; 
+			}
+		}
+
+		perturbed_Aij[i] = Aij_OF;
+		Info<<"perturbed_Aij= "<<perturbed_Aij[i]<<"\n"<<endl;
+	 
+
+	}
+	Info<<"perturbed_Aij[0]= "<<perturbed_Aij[0]<<"\n";
+	Info<<"perturbed_Aij[1]= "<<perturbed_Aij[1]<<"\n";
+	Info<<"perturbed_Aij[1]= "<<perturbed_Aij[2]<<"\n";
+	Info<<"perturbed_Aij[1]= "<<perturbed_Aij[3]<<"\n";
+	Info<<"perturbed_Aij[2]= "<<perturbed_Aij[4]<<endl;
+	Info<<"************ End MAIN *****************************************\n\n\n"<<endl;
 	
+	for (i = 0; i < 3; i++)
+	{
+		delete [] newAij[i];
+	}
+	delete [] newAij;
+
 	//uncertainty.PerturbedAij();
 	
 	
@@ -76,18 +130,13 @@ int main()
         << (e.x() * eigenVectors(t6, e)).z()
         << endl;    
 
-        Info<< symm(t6) <<endl;
+        Info<<"symmetric tensor t6= "<< symm(t6) <<endl;
         
     
 }
 Info<< nl;
-	
-	//Info<< "tensor" << T << endl;
-    //vector e = eigenValues(T);
-    //Info<< "eigenvalues " << e << endl;
 
-	//tensor ev = eigenVectors(T);
-    //Info<< "eigenvectors " << ev << endl;
+
 
 	std::cin.get();
 

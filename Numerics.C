@@ -75,7 +75,7 @@ void Numerics::EigenRecomposition(double** A_ij, double** Eig_Vec, double* Eig_V
         {
             if (i == j) deltaN[i][j] = 1.0;
             else deltaN[i][j] = 0.0;
-            //std::cout << "deltaN["<<i<<"]["<<j<<"]= "<<deltaN[i][j]<<std::endl;
+            //Info<< "deltaN["<<i<<"]["<<j<<"]= "<<deltaN[i][j]<<endl;
         }
     }
 
@@ -87,10 +87,10 @@ void Numerics::EigenRecomposition(double** A_ij, double** Eig_Vec, double* Eig_V
             for (k = 0; k < n; k++)
             {
                 tmp[i][j] += Eig_Vec[i][k] * Eig_Val[k] * deltaN[k][j];
-                //std::cout << "tmp["<<i<<"]["<<j<<"]= "<<tmp[i][j]<<std::endl;
-                //std::cout << "Eig_Vec_init["<<i<<"]["<<k<<"]= "<<Eig_Vec[i][k]<<std::endl;
-                //std::cout << "Eig_Val_init["<<k<<"]= "<<Eig_Val[k]<<std::endl;
-                //std::cout << "DeltaN_init["<<k<<"]["<<j<<"]= "<<deltaN[i][k]<<std::endl;
+                //Info<< "tmp["<<i<<"]["<<j<<"]= "<<tmp[i][j]<<endl;
+                //Info<< "Eig_Vec_init["<<i<<"]["<<k<<"]= "<<Eig_Vec[i][k]<<endl;
+                //Info<< "Eig_Val_init["<<k<<"]= "<<Eig_Val[k]<<endl;
+                //Info<< "DeltaN_init["<<k<<"]["<<j<<"]= "<<deltaN[i][k]<<endl;
 
             }
         }

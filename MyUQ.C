@@ -33,68 +33,72 @@ UQ::UQ()
 /* The following block of code will disappear in the final implementation
    and will be replaced with calculated anisotropy tensor */
 /*************************** Start ******************************************/   
-	Rij[0] = {1,0,-4,0,5,4,-4,4,3};//to read in fields
+//	Aij[0] = {1,0,-4,0,5,4,-4,4,3};//to read in fields
 
-	//read in Reynold stress field
-	Info<<"*********** Start reading anisotropy tensor in each cell **************\n\n";
-	for ( int i = 1; i < 5; i++)
-	{
-		Rij[i] = {0.6592491, 0.04143975, 0, 0.04143974, -0.3259158, 0, 0, 0, -0.333333};
-		//Rij[i] = {1, 1, -1, 1, 2, 0, -1, 0, 5};
-		//Rij[i] = {3, -2, 4, -2, 6, 2, 4, 2, 3};
-		Info<<"i= "<<i-1<<" Rij= "<<Rij[i-1]<<Rij[i-1].row(1)<<nl;
-		if(i==4)
-		{
-			Info<<"i= "<<i<<" Rij= "<<Rij[i]<<Rij[i].row(1)<<"\n\n";
 
-		}
-	}
-	Info<<"*********** End ********************************************************\n\n"<<endl;
+//	//read in Reynold stress field
+//	Info<<"*********** Start reading anisotropy tensor in each cell **************\n\n";
+//	for ( int i = 1; i < 5; i++)
+//	{
+//		Aij[i] = {0.6592491, 0.04143975, 0, 0.04143974, -0.3259158, 0, 0, 0, -0.333333};
+//		//Aij[i] = {1, 1, -1, 1, 2, 0, -1, 0, 5};
+//		//Aij[i] = {3, -2, 4, -2, 6, 2, 4, 2, 3};
+//		Info<<"i= "<<i-1<<" Aij= "<<Aij[i-1]<<Aij[i-1].row(1)<<nl;
+//		if(i==4)
+//		{
+//			Info<<"i= "<<i<<" Aij= "<<Aij[i]<<=Aij[i].row(1)<<"\n\n";
+
+//		}
+//	}
+//	Info<<"*********** End ********************************************************\n\n"<<endl;
 /*************************** End ******************************************/
 
 }
 
 //**********Member functions************//
-void UQ::EigenSpace ()
+void UQ::EigenSpace (symmTensor& Aij_OF, double** m_newA_ij, symmTensor Aij, unsigned short& celli)
 {
-	tensor ev_inv[5];//An temporary variable declared here to help store the inverse of 
+	tensor ev_inv;//An temporary variable declared here to help store the inverse of 
 					 //eigenvectors, because eigenvectors (3 components) corresponding
 					 //to each eigenvalue (3 in total) need to be arranged in column manner
 					 //so that "EigenRecomposition" can work properly
-	unsigned short i, x, y;
+	unsigned short x, y;
 
-	for (i = 0; i < 5; i++)
-	{
+	
 		
-		e[i] = eigenValues(Rij[i]);//Note here "eigenValues" is the intrinsic function
+		e = eigenValues(Aij);//Note here "eigenValues" is the intrinsic function
 								   //offered by OpenFoam 
-		ev[i] = eigenVectors(Rij[i]);
-		ev_inv[i] = inv(ev[i]); //find the inverse of eigenvectors will set each set of eigenvectors
+		ev = eigenVectors(Aij);
+		ev_inv = inv(ev); //find the inverse of eigenvectors will set each set of eigenvectors
 								//(for each eigenvalue) in column manner which is directly used to
 								//calculate recomposed anisotropy tensor 
 
-		m_Eig_Val[0] = e[i].x();
-		m_Eig_Val[1] = e[i].y();
-		m_Eig_Val[2] = e[i].z();
+		m_Eig_Val[0] = e.x();
+		m_Eig_Val[1] = e.y();
+		m_Eig_Val[2] = e.z();
 
-		ev_sole[i][0] = ev_inv[i].xx();
-		ev_sole[i][1] = ev_inv[i].xy();
-		ev_sole[i][2] = ev_inv[i].xz();
-		ev_sole[i][3] = ev_inv[i].yx();
-		ev_sole[i][4] = ev_inv[i].yy();
-		ev_sole[i][5] = ev_inv[i].yz();
-		ev_sole[i][6] = ev_inv[i].zx();
-		ev_sole[i][7] = ev_inv[i].zy();
-		ev_sole[i][8] = ev_inv[i].zz();	
+		ev_sole[0] = ev_inv.xx();
+		ev_sole[1] = ev_inv.xy();
+		ev_sole[2] = ev_inv.xz();
+		ev_sole[3] = ev_inv.yx();
+		ev_sole[4] = ev_inv.yy();
+		ev_sole[5] = ev_inv.yz();
+		ev_sole[6] = ev_inv.zx();
+		ev_sole[7] = ev_inv.zy();
+		ev_sole[8] = ev_inv.zz();	
 
-		Info<<"****************"<<" i= "<<i<< " Setting eigenvectors in square matrix ********************\n\n";
+		Info<<"C*********************** UQ methodology start here ***************************C\n";
+		Info<<"C		**************************************                        C\n";                           
+		Info<<"C			***************************                           C\n";
+		Info<<"C				*********                                     C\n";
+		Info<<"C**************** "<<"celli= "<<celli<<" Setting eigenvectors in square matrix *************C\n\n";
 		for (x = 0; x < 3; x++)
 		{
 			int count = x*3;
 			for (y = 0; y < 3; y++)
 			{
-				m_Eig_Vec[x][y] 	= ev_sole[i][y+count];
-				m_New_Eig_Vec[x][y] = ev_sole[i][y+count];
+				m_Eig_Vec[x][y] 	= ev_sole[y+count];
+				m_New_Eig_Vec[x][y] = ev_sole[y+count];
 				Info << "m_Eig_Vec["<<x<<"]["<<y<<"]= "<<m_Eig_Vec[x][y] <<endl;   
 			}
 		}
@@ -103,7 +107,7 @@ void UQ::EigenSpace ()
 										  //be compatible with the calculated eigenvalues, i.e. eigenValues(en_inv[i])
 
 		//std::sort(m_Eig_Val, m_Eig_Val+3, std::greater<double>());
-		Info<< "i= "<<i<<" m_Eig_Val[0]= " << m_Eig_Val[0]<<" m_Eig_Val[1]= "<<m_Eig_Val[1]<<" m_Eig_Val[2]= "<<m_Eig_Val[2]<<endl;	
+		Info<< "celli= "<<celli<<" m_Eig_Val[0]= " << m_Eig_Val[0]<<" m_Eig_Val[1]= "<<m_Eig_Val[1]<<" m_Eig_Val[2]= "<<m_Eig_Val[2]<<endl;	
 		Info<<"******************************** End **********************************************\n\n"<<endl;
 	
 		/* The following block of code verifies the methodology that was implemented to recompose the original matrix from 
@@ -125,16 +129,29 @@ void UQ::EigenSpace ()
 
 
 
-		Info<<"****************"<<" i_before= "<<i<< " Start calculating Perturbed anisotropy tensor ********************\n\n";
+		Info<<"**************** "<<"celli= "<<celli<< " Start calculating Perturbed anisotropy tensor ********************\n";
+		Info<<"**************** ********************************************************************* *****\n\n";
 
-		PerturbedAij();
+		PerturbedAij(m_newA_ij);//perturbed anisotropy matrix at an individual cell is returned 
+		Aij_OF = {m_newA_ij[0][0], m_newA_ij[0][1], m_newA_ij[0][2], 
+				  m_newA_ij[1][1], m_newA_ij[1][2], m_newA_ij[2][2]};//Aij_OF is a "symmTensor" type variable which is a 1D array with size 
+				  													 //1 in this particular case. It stores the calculated perturbed anisotropy
+																	 //matrix at an individual cell and return to where the "EigenSpace" function
+																	 //is being called (main function) through passing by reference
+																	 
 
+		for (x = 0; x < 3; x++)//this for loop is created to test if the perturbed anisotropy matrix is returned correctly
+		{
+			for (y = 0; y < 3; y++)
+			{
+				Info<<"m_newA_ij"<<"["<< x <<"]"<<"["<<y<<"]= "<< m_newA_ij[x][y]<<endl; 
+			}
+		}
+		Info<<"******************************** End **********************************************\n";
 		Info<<"******************************** End **********************************************\n\n"<<endl;
-
-	}
 }
 
-void UQ::PerturbedAij()
+void UQ::PerturbedAij(double** m_newA_ij)
 {
 	/* declare metrics within member functions means 
 	1. you must use it (not only assign values)
@@ -159,10 +176,10 @@ void UQ::PerturbedAij()
 		c2c = 2.0*(m_Eig_Val[1] - m_Eig_Val[0]);
 		c3c = 3.0*m_Eig_Val[0] + 1.0;	
 	
-	Info<< "**********Start unperturbed (baseline) eigenvalues**********\n\n";  
+	Info<< "********** Start unperturbed (baseline) eigenvalues **********\n\n";  
 	Info<< "c1c= "<<c1c<<" c2c= "<<c2c<<" c3c= "<<c3c<<endl;
 	Info<< "m_Eig_Val[0]= "<<m_Eig_Val[0]<<" m_Eig_Val[1]= "<<m_Eig_Val[1]<<" m_Eig_Val[2]= "<<m_Eig_Val[2]<<endl;
-	Info<< "**********End unperturbed (baseline) eigenvalues**********\n\n"<<endl; 
+	Info<< "********** End unperturbed (baseline) eigenvalues **********\n\n"<<endl; 
 
 	
 /* define barycentric triangle corner points */
@@ -176,7 +193,7 @@ void UQ::PerturbedAij()
   Corners[2][0] = 0.5; //x3
   Corners[2][1] = 0.866025; //y3
 
-  /* define barycentric cordinates for baseline prediction */
+  /* define barycentric coordinates for baseline prediction */
 	Barycentric_Coord[0] = Corners[0][0] * c1c + Corners[1][0] * c2c + Corners[2][0] * c3c;
 	Barycentric_Coord[1] = Corners[0][1] * c1c + Corners[1][1] * c2c + Corners[2][1] * c3c;
 	Info<<"Bary_Coord[0]= "<<Barycentric_Coord[0]<<" Bary_Coord[1]= "<<Barycentric_Coord[1]<<endl;  
@@ -221,10 +238,10 @@ void UQ::PerturbedAij()
 	m_Eig_Val[1] = 0.5*c2c + m_Eig_Val[0];
 	m_Eig_Val[2] = c1c + m_Eig_Val[1];
   	 
-	Info<< "**********Start perturbed eigenvalues**********\n\n";  
+	Info<< "********** Start perturbed eigenvalues **********\n\n";  
 	Info<< "c1c= "<<c1c<<" c2c= "<<c2c<<" c3c= "<<c3c<<endl;
 	Info<< "m_Eig_Val[0]= "<<m_Eig_Val[0]<<" m_Eig_Val[1]= "<<m_Eig_Val[1]<<" m_Eig_Val[2]= "<<m_Eig_Val[2]<<endl;
-	Info<< "**********End perturbed eigenvalues**********\n\n"<<endl; 
+	Info<< "********** End perturbed eigenvalues **********\n\n"<<endl; 
 	
 
 

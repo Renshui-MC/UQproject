@@ -9,11 +9,12 @@ class UQ : public Numerics
 {
 	
 	protected:
-		tensor Rij[5]; //Note 5 means 5 rows for this particular example
-		vector e[5]; 
-		tensor ev[5];
-		double e_sort[5][3];//the first [] is rwo and the second [] is col. **later might change to double** e_sort = new double* [];**
-		double ev_sole[5][9];
+		symmTensor Aij; //Note 5 means 5 rows for this particular example
+		symmTensor Aij_OF;
+		vector e; 
+		tensor ev;
+		double e_sort[3];//the first [] is rwo and the second [] is col. **later might change to double** e_sort = new double* [];**
+		double ev_sole[9];
 
 
 	public:
@@ -21,10 +22,10 @@ class UQ : public Numerics
 		UQ ();
 
 //********* Member functions ************//
-		void EigenSpace ();
+		virtual void EigenSpace (symmTensor& Aij_OF, double** m_newA_ij, symmTensor Aij, unsigned short& celli);
 		
 
-		void PerturbedAij ();
+		virtual void PerturbedAij (double** m_newA_ij);
 	
 };
 
