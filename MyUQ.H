@@ -9,8 +9,8 @@ class UQ : public Numerics
 {
 	
 	protected:
-		symmTensor Aij; //Note 5 means 5 rows for this particular example
-		symmTensor Aij_OF;
+		symmTensor Bij; //Note 5 means 5 rows for this particular example
+		symmTensor Bij_OF;
 		vector e; 
 		tensor ev;
 		double e_sort[3];//the first [] is rwo and the second [] is col. **later might change to double** e_sort = new double* [];**
@@ -22,10 +22,10 @@ class UQ : public Numerics
 		UQ ();
 
 //********* Member functions ************//
-		virtual void EigenSpace (symmTensor& Aij_OF, double** m_newA_ij, symmTensor Aij, unsigned short& celli);
+		virtual void EigenSpace (symmTensor& Bij_OF, double** m_newB_ij, symmTensor Bij, unsigned short& celli);
 		
 
-		virtual void PerturbedAij (double** m_newA_ij);
+		virtual void PerturbedAij (double** m_newB_ij);
 	
 };
 

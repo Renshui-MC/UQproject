@@ -56,7 +56,7 @@ UQ::UQ()
 }
 
 //**********Member functions************//
-void UQ::EigenSpace (symmTensor& Aij_OF, double** m_newA_ij, symmTensor Aij, unsigned short& celli)
+void UQ::EigenSpace (symmTensor& Bij_OF, double** m_newB_ij, symmTensor Bij, unsigned short& celli)
 {
 	tensor ev_inv;//An temporary variable declared here to help store the inverse of 
 					 //eigenvectors, because eigenvectors (3 components) corresponding
@@ -66,9 +66,9 @@ void UQ::EigenSpace (symmTensor& Aij_OF, double** m_newA_ij, symmTensor Aij, uns
 
 	
 		
-		e = eigenValues(Aij);//Note here "eigenValues" is the intrinsic function
+		e = eigenValues(Bij);//Note here "eigenValues" is the intrinsic function
 								   //offered by OpenFoam 
-		ev = eigenVectors(Aij);
+		ev = eigenVectors(Bij);
 		ev_inv = inv(ev); //find the inverse of eigenvectors will set each set of eigenvectors
 								//(for each eigenvalue) in column manner which is directly used to
 								//calculate recomposed anisotropy tensor 
@@ -111,18 +111,18 @@ void UQ::EigenSpace (symmTensor& Aij_OF, double** m_newA_ij, symmTensor Aij, uns
 		Info<<"******************************** End **********************************************\n\n"<<endl;
 	
 		/* The following block of code verifies the methodology that was implemented to recompose the original matrix from 
-		   its eigenvectors and eigenvalues (from CS point of view since variables m_A_ij, m_Eig_Vec, m_Eig_Val, etc are stored on heap
+		   its eigenvectors and eigenvalues (from CS point of view since variables m_B_ij, m_Eig_Vec, m_Eig_Val, etc are stored on heap
 		   they have the lifetime till the program comes to the end of the global scope, keep that in mind and ENSURE your perturbed aij 
 		   matrices are passed to the functions that need these perturbed matrices, e.g. pk and pw ) */
 
 		/*Info<<"****************"<<" i_before= "<<i<< " Start calculating Recomposed anisotropy tensor ********************\n\n";
-		EigenRecomposition(m_A_ij, m_Eig_Vec, m_Eig_Val, 3);
+		EigenRecomposition(m_B_ij, m_Eig_Vec, m_Eig_Val, 3);
 
 		for (x = 0; x < 3; x++)
 		{
 			for (y = 0; y < 3; y++)
 			{
-				Info<<"m_A_ij"<<"["<< x <<"]"<<"["<<y<<"]= "<< m_A_ij[x][y]<<endl; 
+				Info<<"m_B_ij"<<"["<< x <<"]"<<"["<<y<<"]= "<< m_B_ij[x][y]<<endl; 
 			}
 		}
 		Info<<"******************************** End **********************************************\n\n"<<endl;*/
@@ -132,9 +132,9 @@ void UQ::EigenSpace (symmTensor& Aij_OF, double** m_newA_ij, symmTensor Aij, uns
 		Info<<"**************** "<<"celli= "<<celli<< " Start calculating Perturbed anisotropy tensor ********************\n";
 		Info<<"**************** ********************************************************************* *****\n\n";
 
-		PerturbedAij(m_newA_ij);//perturbed anisotropy matrix at an individual cell is returned 
-		Aij_OF = {m_newA_ij[0][0], m_newA_ij[0][1], m_newA_ij[0][2], 
-				  m_newA_ij[1][1], m_newA_ij[1][2], m_newA_ij[2][2]};//Aij_OF is a "symmTensor" type variable which is a 1D array with size 
+		PerturbedAij(m_newB_ij);//perturbed anisotropy matrix at an individual cell is returned 
+		Bij_OF = {m_newB_ij[0][0], m_newB_ij[0][1], m_newB_ij[0][2], 
+				  m_newB_ij[1][1], m_newB_ij[1][2], m_newB_ij[2][2]};//Aij_OF is a "symmTensor" type variable which is a 1D array with size 
 				  													 //1 in this particular case. It stores the calculated perturbed anisotropy
 																	 //matrix at an individual cell and return to where the "EigenSpace" function
 																	 //is being called (main function) through passing by reference
@@ -144,14 +144,14 @@ void UQ::EigenSpace (symmTensor& Aij_OF, double** m_newA_ij, symmTensor Aij, uns
 		{
 			for (y = 0; y < 3; y++)
 			{
-				Info<<"m_newA_ij"<<"["<< x <<"]"<<"["<<y<<"]= "<< m_newA_ij[x][y]<<endl; 
+				Info<<"m_newB_ij"<<"["<< x <<"]"<<"["<<y<<"]= "<< m_newB_ij[x][y]<<endl; 
 			}
 		}
 		Info<<"******************************** End **********************************************\n";
 		Info<<"******************************** End **********************************************\n\n"<<endl;
 }
 
-void UQ::PerturbedAij(double** m_newA_ij)
+void UQ::PerturbedAij(double** m_newB_ij)
 {
 	/* declare metrics within member functions means 
 	1. you must use it (not only assign values)
@@ -245,15 +245,15 @@ void UQ::PerturbedAij(double** m_newA_ij)
 	
 
 
-	EigenRecomposition(m_newA_ij, m_New_Eig_Vec, m_Eig_Val, 3);
+	EigenRecomposition(m_newB_ij, m_New_Eig_Vec, m_Eig_Val, 3);
 	
 	for (x = 0; x < 3; x++)
 	{
 		for (y = 0; y < 3; y++)
 		{
-			//Info<<"m_A_ij"<<"["<< x <<"]"<<"["<<y<<"]= "<< m_A_ij[x][y]<<endl; 
+			//Info<<"m_B_ij"<<"["<< x <<"]"<<"["<<y<<"]= "<< m_B_ij[x][y]<<endl; 
 			//Info<<"m_NewEig_Vec"<<"["<< x <<"]"<<"["<<y<<"]= "<<m_New_Eig_Vec[x][y]<<endl;
-			Info<<"m_newA_ij"<<"["<< x <<"]"<<"["<<y<<"]= "<< m_newA_ij[x][y]<<endl; 
+			Info<<"m_newB_ij"<<"["<< x <<"]"<<"["<<y<<"]= "<< m_newB_ij[x][y]<<endl; 
 		}
 	}
 

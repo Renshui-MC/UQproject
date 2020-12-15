@@ -9,8 +9,8 @@ Numerics::Numerics(void)//try to remove void later!
 {
    Info <<"Minghan is in Constructor"<<endl;
    
-    m_A_ij              = new double* [3];
-    m_newA_ij           = new double* [3];
+    m_B_ij              = new double* [3];
+    m_newB_ij           = new double* [3];
     m_Eig_Vec           = new double* [3];
     m_New_Eig_Vec       = new double* [3];
     Corners             = new double* [3];
@@ -19,8 +19,8 @@ Numerics::Numerics(void)//try to remove void later!
     New_Coord           = new double [2];
     for (unsigned short i = 0; i < 3; i++)
     {
-        m_A_ij[i]           = new double [3];
-        m_newA_ij[i]        = new double [3];
+        m_B_ij[i]           = new double [3];
+        m_newB_ij[i]        = new double [3];
         m_Eig_Vec[i]        = new double [3];
         m_New_Eig_Vec[i]    = new double [3];
         Corners[i]          = new double [2];//i=3 means 3 row pointers and [2] means actual two elements each row
@@ -40,14 +40,14 @@ Numerics::~Numerics(void)
     Info <<"Minghan is in Destructor"<<endl;
     for (unsigned short i = 0; i < 3; i++)
     {
-        delete [] m_A_ij[i];
-        delete [] m_newA_ij[i];
+        delete [] m_B_ij[i];
+        delete [] m_newB_ij[i];
         delete [] m_Eig_Vec[i];
         delete [] m_New_Eig_Vec[i];
         delete [] Corners[i];
     }
-        delete [] m_A_ij;
-        delete [] m_newA_ij;
+        delete [] m_B_ij;
+        delete [] m_newB_ij;
         delete [] m_Eig_Vec;
         delete [] m_New_Eig_Vec;
         delete [] Corners;
@@ -56,7 +56,7 @@ Numerics::~Numerics(void)
         delete [] New_Coord;
 }
 
-void Numerics::EigenRecomposition(double** A_ij, double** Eig_Vec, double* Eig_Val, unsigned short n)
+void Numerics::EigenRecomposition(double** B_ij, double** Eig_Vec, double* Eig_Val, unsigned short n)
 {
     unsigned short i, j, k;//Note for loop can recognize i, j, k inside the scope
     double** tmp = new double* [n];
@@ -100,10 +100,10 @@ void Numerics::EigenRecomposition(double** A_ij, double** Eig_Vec, double* Eig_V
     {
         for (j = 0; j < n; j++)
         {
-            A_ij[i][j] = 0.0;
+            B_ij[i][j] = 0.0;
             for (k = 0; k < n; k++)
             {
-                A_ij[i][j] += tmp[i][k] * Eig_Vec[j][k];
+                B_ij[i][j] += tmp[i][k] * Eig_Vec[j][k];
             }
         }
         
