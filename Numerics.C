@@ -7,53 +7,88 @@ namespace Foam
 { 
 Numerics::Numerics(void)//try to remove void later!
 {
-   Info <<"Minghan is in Constructor"<<endl;
-   
-    m_B_ij              = new double* [3];
-    m_newB_ij           = new double* [3];
-    m_Eig_Vec           = new double* [3];
-    m_New_Eig_Vec       = new double* [3];
-    Corners             = new double* [3];
-    m_Eig_Val           = new double [3];
-    Barycentric_Coord   = new double [2];
-    New_Coord           = new double [2];
-    for (unsigned short i = 0; i < 3; i++)
+    unsigned short i,j;
+    
+    Info<<"C*********************** Minghan is in constructor ***************************C\n";
+    m_delta3 = NULL;
+    m_delta3 = new double* [3];
+    for (i = 0; i < 3; i++)
     {
-        m_B_ij[i]           = new double [3];
-        m_newB_ij[i]        = new double [3];
-        m_Eig_Vec[i]        = new double [3];
-        m_New_Eig_Vec[i]    = new double [3];
-        Corners[i]          = new double [2];//i=3 means 3 row pointers and [2] means actual two elements each row
-        m_Eig_Val[i]        = 0; //initializing 
+        m_delta3[i] = new double [3];
+    }
+
+    for (i = 0; i < 3; i++)
+    {
+        for(j = 0; j < 3; j++)
+        {
+            if (i == j) m_delta3[i][j] = 1.0;
+            else m_delta3[i][j] = 0.0;
+        }
+    }
+
+    m_MeanReynoldsStress    = new double* [3];
+    m_MeanPerturbedRSM      = new double* [3];
+    m_B_ij                  = new double* [3];
+    m_newB_ij               = new double* [3];
+    m_Eig_Vec               = new double* [3];
+    m_New_Eig_Vec           = new double* [3];
+    m_Corners               = new double* [3];
+    m_Eig_Val               = new double [3];
+    m_Barycentric_Coord     = new double [2];
+    m_New_Coord             = new double [2];
+    for (i = 0; i < 3; i++)
+    {
+        m_MeanReynoldsStress[i]     = new double [3];
+        m_MeanPerturbedRSM[i]       = new double [3];
+        m_B_ij[i]                   = new double [3];
+        m_newB_ij[i]                = new double [3];
+        m_Eig_Vec[i]                = new double [3];
+        m_New_Eig_Vec[i]            = new double [3];
+        m_Corners[i]                = new double [2];//i=3 means 3 row pointers and [2] means actual two elements each row
+        m_Eig_Val[i]                = 0; //initializing 
     }
     /* define barycentric traingle corner points */
-    Corners[0][0] = 1.0;
-    Corners[0][1] = 0.0;
-    Corners[1][0] = 0.0;
-    Corners[1][1] = 0.0;
-    Corners[2][0] = 0.5;
-    Corners[2][1] = 0.866025;
+    m_Corners[0][0] = 1.0;
+    m_Corners[0][1] = 0.0;
+    m_Corners[1][0] = 0.0;
+    m_Corners[1][1] = 0.0;
+    m_Corners[2][0] = 0.5;
+    m_Corners[2][1] = 0.866025;
 }
 
 Numerics::~Numerics(void)
 {
-    Info <<"Minghan is in Destructor"<<endl;
+    Info<<"C*********************** Minghan is in Destructor ***************************C\n\n\n";
+   
+    if (m_delta3 != NULL)
+    {
+        for (unsigned short i = 0; i < 3; i++)
+        {
+            delete [] m_delta3[i];
+        }
+        delete [] m_delta3;
+    }
+
     for (unsigned short i = 0; i < 3; i++)
     {
+        delete [] m_MeanReynoldsStress[i];
+        delete [] m_MeanPerturbedRSM[i];
         delete [] m_B_ij[i];
         delete [] m_newB_ij[i];
         delete [] m_Eig_Vec[i];
         delete [] m_New_Eig_Vec[i];
-        delete [] Corners[i];
+        delete [] m_Corners[i];
     }
+        delete [] m_MeanReynoldsStress;
+        delete [] m_MeanPerturbedRSM;
         delete [] m_B_ij;
         delete [] m_newB_ij;
         delete [] m_Eig_Vec;
         delete [] m_New_Eig_Vec;
-        delete [] Corners;
+        delete [] m_Corners;
         delete [] m_Eig_Val;
-        delete [] Barycentric_Coord;
-        delete [] New_Coord;
+        delete [] m_Barycentric_Coord;
+        delete [] m_New_Coord;
 }
 
 void Numerics::EigenRecomposition(double** B_ij, double** Eig_Vec, double* Eig_Val, unsigned short n)

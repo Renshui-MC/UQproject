@@ -10,18 +10,25 @@ using namespace Foam;
 
 int main()
 {
+	scalar k = 0.0090;
 	symmTensor Aij_OF;
+	symmTensor uiuj_OF;
+
 	symmTensor Aij[5];
+	symmTensor Rij[5];
 	symmTensor perturbed_Aij[5];
+	symmTensor perturbed_uiuj[5];
 
 	unsigned short i, x, y;
 	/* newAij could be any name and passed by reference by calling "EigenSpace" function
 	   Note newAij must be exactly same as defined in the Numerics.H otherwise an linking
 	   error will be generated */
-	double** newAij = new double* [3];
+	double** newAij 	= new double* [3];
+	double** newuiuj 	= new double* [3];
 	for (i = 0; i < 3; i++)
 	{
-		newAij[i] = new double [3];
+		newAij[i] 	= new double [3];
+		newuiuj[i]	= new double [3];
 	} 
 
 
@@ -33,16 +40,20 @@ int main()
 	for (i = 1; i < 5; i++)
 	{
 		Aij[i] = {0.6592491, 0.04143975, 0, -0.3259158, 0, -0.333333};
+		Rij[i] = {0.0179, 7.4577e-4, 0, 1.3349e-4, 0, 0};
 		//Aij[i] = {1, 1, -1, 1, 2, 0, -1, 0, 5};
 		//Aij[i] = {3, -2, 4, -2, 6, 2, 4, 2, 3};
 	}
 
-	UQ uncertainty;
+
 
 	for (i = 0; i < 5; i++)
 	{
+	 UQ uncertainty(k, Rij[i],i);
+	 
+	 uncertainty.EigenSpace(Aij_OF, uiuj_OF, newAij, newuiuj, 
+	 						Aij[i], i);
 
-	 uncertainty.EigenSpace(Aij_OF, newAij, Aij[i], i);
 	 Info<<"************** celli= "<<i<<" inside MAIN! **************"<<endl;
 	 	for (x = 0; x < 3; x++)
 		{
@@ -52,23 +63,38 @@ int main()
 			}
 		}
 
-		perturbed_Aij[i] = Aij_OF;
-		Info<<"perturbed_Aij= "<<perturbed_Aij[i]<<"\n"<<endl;
+		for (x = 0; x < 3; x++)
+		{
+			for (y = 0; y < 3; y++)
+			{
+				Info<<"newuiuj"<<"["<< x <<"]"<<"["<<y<<"]= "<< newuiuj[x][y]<<endl; 
+			}
+		}
+
+		perturbed_Aij[i] 	= Aij_OF;
+		perturbed_uiuj[i] 	= uiuj_OF;
+		Info<<"perturbed_Aij= "<<perturbed_Aij[i]<<endl;
+		Info<<"perturbed_uiuj= "<<perturbed_uiuj[i]<<endl;
+
 	 
 
 	}
+	
+	Info<<"************ UQ loop has ended! Check the store perturbed Aij ************"<<endl;
 	Info<<"perturbed_Aij[0]= "<<perturbed_Aij[0]<<"\n";
 	Info<<"perturbed_Aij[1]= "<<perturbed_Aij[1]<<"\n";
 	Info<<"perturbed_Aij[1]= "<<perturbed_Aij[2]<<"\n";
 	Info<<"perturbed_Aij[1]= "<<perturbed_Aij[3]<<"\n";
-	Info<<"perturbed_Aij[2]= "<<perturbed_Aij[4]<<endl;
-	Info<<"************ End MAIN *****************************************\n\n\n"<<endl;
+	Info<<"perturbed_Aij[2]= "<<perturbed_Aij[4]<<"\n";
+	Info<<"************ End MAIN *****************************************"<<endl;
 	
 	for (i = 0; i < 3; i++)
 	{
 		delete [] newAij[i];
+		delete [] newuiuj[i];
 	}
 	delete [] newAij;
+	delete [] newuiuj;
 
 	//uncertainty.PerturbedAij();
 	

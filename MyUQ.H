@@ -9,23 +9,35 @@ class UQ : public Numerics
 {
 	
 	protected:
-		symmTensor Bij; //Note 5 means 5 rows for this particular example
-		symmTensor Bij_OF;
-		vector e; 
-		tensor ev;
-		double e_sort[3];//the first [] is rwo and the second [] is col. **later might change to double** e_sort = new double* [];**
-		double ev_sole[9];
+		scalar m_turb_ke;
+		scalar _k;
+		/***** Even though the following two variables are declared and defined in main() and will compile fine without 
+		 errors and calculations inside the MyUQ.C translation unit can proceed thoroughly through passing by reference 
+		 under certain conditions, the BIG problem is once being passed into the MyUQ translation unit there is no room 
+		 (memory) to hold them which must be assigned to any defined variables. In short, always allocate variables to
+		 memory so that you can use them when you want */
+		symmTensor _Rij; 
+		symmTensor _Bij; 
+		/****************** End ********************/
+
+		symmTensor m_newBij_OF;
+		symmTensor m_newuiuj_OF;
+		vector m_e; 
+		tensor m_ev;
+		double m_e_sort[3];//the first [] is rwo and the second [] is col. **later might change to double** e_sort = new double* [];**
+		double m_ev_sole[9];
 
 
 	public:
 //*********** Constructor ***************//
-		UQ ();
+		UQ (scalar& _k, symmTensor& _Rij, unsigned short _celli);
 
 //********* Member functions ************//
-		virtual void EigenSpace (symmTensor& Bij_OF, double** m_newB_ij, symmTensor Bij, unsigned short& celli);
-		
+		virtual void EigenSpace (symmTensor& m_newBij_OF, symmTensor& m_newuiuj_OF, double** m_newB_ij, double** m_MeanPerturbedRSM,
+								 symmTensor& _Bij, unsigned short& _celli);
 
-		virtual void PerturbedAij (double** m_newB_ij);
+
+		virtual void PerturbedAij (double** m_newB_ij, double** m_MeanPerturbedRSM);
 	
 };
 
