@@ -11,13 +11,16 @@ using namespace Foam;
 int main()
 {
 	scalar k = 0.0090;
+	scalar nut = 0.5;
 	symmTensor Aij_OF;
 	symmTensor uiuj_OF;
+	symmTensor Sij_OF;
 
 	symmTensor Aij[5];
 	symmTensor Rij[5];
 	symmTensor perturbed_Aij[5];
 	symmTensor perturbed_uiuj[5];
+	symmTensor perturbed_Sij[5];
 
 	unsigned short i, x, y;
 	/* newAij could be any name and passed by reference by calling "EigenSpace" function
@@ -25,14 +28,17 @@ int main()
 	   error will be generated */
 	double** newAij 	= new double* [3];
 	double** newuiuj 	= new double* [3];
+	double** newSij		= new double* [3];
 	for (i = 0; i < 3; i++)
 	{
 		newAij[i] 	= new double [3];
 		newuiuj[i]	= new double [3];
+		newSij[i]   = new double [3];
 	} 
 
 
 	Aij[0] = {1, 0, -4, 5, 4, 3};//to read in fields
+	Rij[0] = {0, 0, 0, 0, 0, 0};
 
 
 	//read in Reynold stress field
@@ -49,9 +55,10 @@ int main()
 
 	for (i = 0; i < 5; i++)
 	{
-	 UQ uncertainty(k, Rij[i],i);
+	 UQ uncertainty(k, nut, Rij[i], i);
 	 
-	 uncertainty.EigenSpace(Aij_OF, uiuj_OF, newAij, newuiuj, 
+	 uncertainty.EigenSpace(Aij_OF, uiuj_OF, Sij_OF, 
+	 						newAij, newuiuj, newSij,
 	 						Aij[i], i);
 
 	 Info<<"************** celli= "<<i<<" inside MAIN! **************"<<endl;
@@ -71,10 +78,21 @@ int main()
 			}
 		}
 
+		for (x = 0; x < 3; x++)
+		{
+			for (y = 0; y < 3; y++)
+			{
+				Info<<"newSij"<<"["<< x <<"]"<<"["<<y<<"]= "<< newSij[x][y]<<endl; 
+			}
+		}
+
+
 		perturbed_Aij[i] 	= Aij_OF;
 		perturbed_uiuj[i] 	= uiuj_OF;
+		perturbed_Sij[i]    = Sij_OF;
 		Info<<"perturbed_Aij= "<<perturbed_Aij[i]<<endl;
 		Info<<"perturbed_uiuj= "<<perturbed_uiuj[i]<<endl;
+		Info<<"perturbed_Sij= "<<perturbed_Sij[i]<<endl;
 
 	 
 
@@ -157,8 +175,9 @@ int main()
         << endl;    
 
         Info<<"symmetric tensor t6= "<< symm(t6) <<endl;
-        
-    
+        Info<<"two symm t6= "<< twoSymm(t6) <<endl;
+		Info<<"dev(t6)= "<<dev(t6)<<endl;
+		Info<<"dev2(t6)= "<<dev2(t6)<<endl;
 }
 Info<< nl;
 

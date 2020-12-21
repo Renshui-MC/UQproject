@@ -7,10 +7,31 @@ namespace Foam
 { 
 Numerics::Numerics(void)//try to remove void later!
 {
+
     unsigned short i,j;
     
-    Info<<"C*********************** Minghan is in constructor ***************************C\n";
+    Info<<"C*********************** Minghan is in constructor Numerics (unsigned short nDim) ***************************C\n";
+    Info<<"nDim= "<<nDim<<endl;
+   
+    /* --- Initializing variables for the UQ methodology --- */
+    m_delta = NULL;
     m_delta3 = NULL;
+
+    m_delta = new double* [nDim];
+    for (i = 0; i < nDim; i++)
+    {
+        m_delta[i] = new double [nDim];
+    }
+
+    for (i = 0; i < nDim; i++)
+    {
+        for (j = 0; j < nDim; j++)
+        {
+            if (i == j) m_delta[i][j] = 1.0;
+            else m_delta[i][j] = 0.0;
+        }
+    }
+
     m_delta3 = new double* [3];
     for (i = 0; i < 3; i++)
     {
@@ -28,6 +49,7 @@ Numerics::Numerics(void)//try to remove void later!
 
     m_MeanReynoldsStress    = new double* [3];
     m_MeanPerturbedRSM      = new double* [3];
+    m_PerturbedStrainRate   = new double* [nDim];
     m_B_ij                  = new double* [3];
     m_newB_ij               = new double* [3];
     m_Eig_Vec               = new double* [3];
@@ -40,13 +62,36 @@ Numerics::Numerics(void)//try to remove void later!
     {
         m_MeanReynoldsStress[i]     = new double [3];
         m_MeanPerturbedRSM[i]       = new double [3];
+        m_PerturbedStrainRate[i]    = new double [nDim];
         m_B_ij[i]                   = new double [3];
         m_newB_ij[i]                = new double [3];
         m_Eig_Vec[i]                = new double [3];
         m_New_Eig_Vec[i]            = new double [3];
         m_Corners[i]                = new double [2];//i=3 means 3 row pointers and [2] means actual two elements each row
         m_Eig_Val[i]                = 0; //initializing 
+        
+        if(i < 2)
+        {
+            m_Barycentric_Coord[i]  = 0;
+            m_New_Coord[i]          = 0;
+        }
     }
+
+    for (i = 0; i < 3; i++)
+	{  
+		for (j = 0; j < 3; j++)
+		{
+			m_MeanReynoldsStress[i][j] 		= 0.0;
+			m_MeanPerturbedRSM[i][j]		= 0.0;
+            m_PerturbedStrainRate[i][j]     = 0.0;
+			m_B_ij[i][i]                    = 0.0;
+            m_newB_ij[i][j]					= 0.0;
+			m_Eig_Vec[i][j] 		   		= 0.0;
+			m_New_Eig_Vec[i][j] 			= 0.0; 
+		}
+		
+	}
+
     /* define barycentric traingle corner points */
     m_Corners[0][0] = 1.0;
     m_Corners[0][1] = 0.0;
@@ -54,12 +99,23 @@ Numerics::Numerics(void)//try to remove void later!
     m_Corners[1][1] = 0.0;
     m_Corners[2][0] = 0.5;
     m_Corners[2][1] = 0.866025;
+
+
 }
 
 Numerics::~Numerics(void)
 {
     Info<<"C*********************** Minghan is in Destructor ***************************C\n\n\n";
-   
+
+    if (m_delta != NULL)
+    {
+        for (unsigned short i = 0; i < nDim; i++)
+        {
+            delete [] m_delta[i];
+        }
+        delete [] m_delta;
+    }
+    
     if (m_delta3 != NULL)
     {
         for (unsigned short i = 0; i < 3; i++)
@@ -73,6 +129,7 @@ Numerics::~Numerics(void)
     {
         delete [] m_MeanReynoldsStress[i];
         delete [] m_MeanPerturbedRSM[i];
+        delete [] m_PerturbedStrainRate[i];
         delete [] m_B_ij[i];
         delete [] m_newB_ij[i];
         delete [] m_Eig_Vec[i];
@@ -81,6 +138,7 @@ Numerics::~Numerics(void)
     }
         delete [] m_MeanReynoldsStress;
         delete [] m_MeanPerturbedRSM;
+        delete [] m_PerturbedStrainRate;
         delete [] m_B_ij;
         delete [] m_newB_ij;
         delete [] m_Eig_Vec;
@@ -91,7 +149,7 @@ Numerics::~Numerics(void)
         delete [] m_New_Coord;
 }
 
-void Numerics::EigenRecomposition(double** B_ij, double** Eig_Vec, double* Eig_Val, unsigned short n)
+void Numerics::EigenRecomposition(double** m_B_ij, double** m_Eig_Vec, double* m_Eig_Val, unsigned short n)
 {
     unsigned short i, j, k;//Note for loop can recognize i, j, k inside the scope
     double** tmp = new double* [n];
@@ -121,7 +179,7 @@ void Numerics::EigenRecomposition(double** B_ij, double** Eig_Vec, double* Eig_V
             tmp[i][j] = 0.0;//initializing every entry with 0
             for (k = 0; k < n; k++)
             {
-                tmp[i][j] += Eig_Vec[i][k] * Eig_Val[k] * deltaN[k][j];
+                tmp[i][j] += m_Eig_Vec[i][k] * m_Eig_Val[k] * deltaN[k][j];
                 //Info<< "tmp["<<i<<"]["<<j<<"]= "<<tmp[i][j]<<endl;
                 //Info<< "Eig_Vec_init["<<i<<"]["<<k<<"]= "<<Eig_Vec[i][k]<<endl;
                 //Info<< "Eig_Val_init["<<k<<"]= "<<Eig_Val[k]<<endl;
@@ -135,10 +193,10 @@ void Numerics::EigenRecomposition(double** B_ij, double** Eig_Vec, double* Eig_V
     {
         for (j = 0; j < n; j++)
         {
-            B_ij[i][j] = 0.0;
+            m_B_ij[i][j] = 0.0;
             for (k = 0; k < n; k++)
             {
-                B_ij[i][j] += tmp[i][k] * Eig_Vec[j][k];
+                m_B_ij[i][j] += tmp[i][k] * m_Eig_Vec[j][k];
             }
         }
         
