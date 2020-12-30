@@ -30,13 +30,13 @@ class UQ : public Numerics
 
 	public:
 //*********** Constructor ***************//
-		UQ (scalar& _k, scalar& _nut, symmTensor& _Rij, unsigned short& _celli);//already declared in main and passed into MyUQ.C by reference
+		UQ (scalar& _k, scalar& _nut, symmTensor& _Rij, label& _celli);//already declared in main and passed into MyUQ.C by reference
 																  //do not declare them again (refer to the above comments)
 
 //********* Member functions ************//
 		virtual void EigenSpace (symmTensor& m_newBij_OF, symmTensor& m_newuiuj_OF, symmTensor& m_newSij_OF,
 								 double** m_newB_ij, double** m_MeanPerturbedRSM, double** m_PerturbedStrainRate,
-								 symmTensor& _Bij, unsigned short& _celli);
+								 symmTensor& _Bij, label& _celli);
 
 
 		virtual void PerturbedBij (double** m_newB_ij, double** m_MeanPerturbedRSM, double** m_PerturbedStrainRate); //return the perturbed normalized anisotropy matrix

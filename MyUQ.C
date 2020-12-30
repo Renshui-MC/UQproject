@@ -20,6 +20,7 @@
    "tmp"  						temporary
    "m"    						member variables 
    
+
    symbols:
    _k							turbulence kinetic energy from OpenFoam
    _nut      					kinematic viscosity from OpenFoam
@@ -67,7 +68,7 @@
 
 namespace Foam{//specifies the Foam namespace for restricted scopes
 
-UQ::UQ(scalar& _k, scalar& _nut, symmTensor& _Rij, unsigned short& _celli)
+UQ::UQ(scalar& _k, scalar& _nut, symmTensor& _Rij, label& _celli)
 	:m_turb_ke(0), m_e(0, 0, 0), m_ev(0,0,0,0,0,0,0,0,0) //MyUQ members initializer
 {
 	unsigned short i,j,k;
@@ -107,7 +108,7 @@ UQ::UQ(scalar& _k, scalar& _nut, symmTensor& _Rij, unsigned short& _celli)
 		{
 
 				Info<<"m_MeanReynoldsStress_init["<<i<<"]["<<j<<"]= "<<m_MeanReynoldsStress[i][j]<<
-				"  m_PerturbedStrainRate["<<i<<"]["<<j<<"]= "<<m_PerturbedStrainRate[i][j]<<endl;
+				"  m_PerturbedStrainRate_init["<<i<<"]["<<j<<"]= "<<m_PerturbedStrainRate[i][j]<<endl;
 		}
 	}
 	/********************************* End  ***********************************/
@@ -120,7 +121,8 @@ UQ::UQ(scalar& _k, scalar& _nut, symmTensor& _Rij, unsigned short& _celli)
 	Info<<"C				*********                                     C\n";
 	Info<<"C**************** "<<"celli= "<<_celli<<" Setting eigenvectors in square matrix *************C\n\n";
 
-	Info<<"turbulence kinetic energy= "<< _k <<endl;
+	Info<<"turbulence kinetic energy= "<< _k <<
+	" _nut= "<<_nut<<endl;
 	Info<<"_Rij[5]+6= "<<_Rij[0]<<" + "<<"1= "<<_Rij[0] + 1<<endl;
 
 	Info<<nl;
@@ -180,9 +182,9 @@ UQ::UQ(scalar& _k, scalar& _nut, symmTensor& _Rij, unsigned short& _celli)
 
 
 //**********Member functions************//
-void UQ::EigenSpace (symmTensor& m_newBij_OF, symmTensor& m_newuiuj_OF, symmTensor& m_newSij_OF,
+void UQ::EigenSpace (symmTensor& m_newBij_OF, symmTensor& m_newuiuj_OF, symmTensor& m_newSij_OF, //passing to main()
 					 double** m_newB_ij, double** m_MeanPerturbedRSM, double** m_PerturbedStrainRate, //pass to main()
-					 symmTensor& _Bij, unsigned short& _celli)//passed from main()
+					 symmTensor& _Bij, label& _celli)//passed from main()
 {
 	unsigned short x, y;
 
@@ -192,7 +194,10 @@ void UQ::EigenSpace (symmTensor& m_newBij_OF, symmTensor& m_newuiuj_OF, symmTens
 					 //so that "EigenRecomposition" can work properly
 
 	double tmp_ev_sole[9];
-	
+
+	Info<< "_Bij_OF= "<<_Bij<<endl;//calculated in turbulence model and passed to MyUQ.C
+
+	Info<<nl;
 		
 		m_e = eigenValues(_Bij);//Note here "eigenValues" is the intrinsic function
 								   //offered by OpenFoam 
@@ -224,7 +229,7 @@ void UQ::EigenSpace (symmTensor& m_newBij_OF, symmTensor& m_newuiuj_OF, symmTens
 			{
 				m_Eig_Vec[x][y] 	= tmp_ev_sole[y+count];
 				m_New_Eig_Vec[x][y] = tmp_ev_sole[y+count];
-				Info << "m_Eig_Vec["<<x<<"]["<<y<<"]= "<<m_Eig_Vec[x][y] <<endl;   
+				Info << "m_Eig_Vec["<<x<<"]["<<y<<"]= "<<m_New_Eig_Vec[x][y] <<endl;   
 			}
 		}
 
@@ -271,7 +276,7 @@ void UQ::EigenSpace (symmTensor& m_newBij_OF, symmTensor& m_newuiuj_OF, symmTens
 		m_newSij_OF  = {m_PerturbedStrainRate[0][0], m_PerturbedStrainRate[0][1], m_PerturbedStrainRate[0][2],
 						m_PerturbedStrainRate[1][1], m_PerturbedStrainRate[1][2], m_PerturbedStrainRate[2][2]};
 
-
+		Info <<"******************************* Summary Start *******************************\n"<< endl;
 		/* The following for loops are created to help check the outputted results using the UQ methodology */															 
 		for (x = 0; x < 3; x++)//this for loop is created to test if the perturbed anisotropy matrix is returned correctly
 			for (y = 0; y < 3; y++)
@@ -290,12 +295,15 @@ void UQ::EigenSpace (symmTensor& m_newBij_OF, symmTensor& m_newuiuj_OF, symmTens
 				Info<<"m_PerturbedStrainRate_EigenSpace"<<"["<< x <<"]"<<"["<<y<<"]= "<< m_PerturbedStrainRate[x][y]<<endl;  
 
 
-		Info<<"******************************** End **********************************************\n";
-		Info<<"******************************** End **********************************************\n\n"<<endl;
+		Info<<"******************************** Summary End **********************************************\n";
+		Info<<"******************************** End ******************************************************\n\n"<<endl;
 }
 
 void UQ::PerturbedBij(double** m_newB_ij, double** m_MeanPerturbedRSM, double** m_PerturbedStrainRate)
 {
+	/* Refer to my notes taken on Nov 26th and 27th 2020 for Equations */
+	
+
 	/* declare metrics within member functions means 
 	1. you must use it (not only assign values)
 	2. the lifetime is within this scope
@@ -404,17 +412,23 @@ void UQ::PerturbedBij(double** m_newB_ij, double** m_MeanPerturbedRSM, double** 
 	
 
  /* compute perturbed Reynolds stress matrix; use under-relaxation factor (urlx)*/
+	
+	/* Equations */
+	// <UiUj>* = 2 * k * (<Bij>* + (1/3) * delta)					(1)
+	// <UiUj>* = <UiUj> + 0.1 * (<UiUj>* - <UiUj>)					(2)
+	
 	double uq_urlx = 0.1;
+
 
 	for (x = 0; x < 3; x++)
 	{
 		for (y = 0; y < 3; y++)
 		{
 			m_MeanPerturbedRSM[x][y] = 2.0 * m_turb_ke * (m_newB_ij[x][y] + 1.0/3.0 * m_delta3[x][y]);
-			m_MeanPerturbedRSM[x][y] = m_MeanReynoldsStress[x][y] + uq_urlx*(m_MeanPerturbedRSM[x][y] - m_MeanReynoldsStress[x][y]);
+			m_MeanPerturbedRSM[x][y] = m_MeanReynoldsStress[x][y] + uq_urlx*(m_MeanPerturbedRSM[x][y] - m_MeanReynoldsStress[x][y]);			//(1)
 			
 			Info<<"m_MeanPerturbedRSM_PertBij["<<x<<"]["<<y<<"]= "<<m_MeanPerturbedRSM[x][y]<<
-			" m_MeanReynoldsStress_PertBij["<<x<<"]["<<y<<"]= "<<m_MeanReynoldsStress[x][y]<<endl;
+			" m_MeanReynoldsStress_PertBij["<<x<<"]["<<y<<"]= "<<m_MeanReynoldsStress[x][y]<<endl;												//(2)
 		}
 	}
 
@@ -438,6 +452,9 @@ void UQ::SetPerturbedStrainMag(double** m_MeanPerturbedRSM, double** m_Perturbed
 	unsigned short x, y;
 	double TWO3 = 2.0/3.0;
 
+	/* Equations */
+	// <aij>* = <UiUj>* - 2/3*k*delta_ij   (1)
+	// <Sij>* = -aij*/(2*nut)			   (2)	
 
   	/* compute perturbed strain rate tensor */
 	Info<<"----------Start inside SetPerturbedStrainMag function ----------\n\n";  
@@ -446,14 +463,14 @@ void UQ::SetPerturbedStrainMag(double** m_MeanPerturbedRSM, double** m_Perturbed
 	{
 		for (y = 0; y < nDim; y++)
 		{
-			m_PerturbedStrainRate[x][y] = m_MeanPerturbedRSM[x][y]
+			m_PerturbedStrainRate[x][y] = m_MeanPerturbedRSM[x][y]									//(1)
 			-TWO3 * m_turb_ke * m_delta[x][y];
 
-			m_PerturbedStrainRate[x][y] = - m_PerturbedStrainRate[x][y] / (2 * m_nut);
+
+			m_PerturbedStrainRate[x][y] = - m_PerturbedStrainRate[x][y] / (2 * m_nut);				//(2)
 
 			Info<<"m_PerturbedStrainRate["<<x<<"]["<<y<<"]= "<<m_PerturbedStrainRate[x][y]<<
 			" m_MeanPerturbedRSM["<<x<<"]["<<y<<"]= "<<m_MeanPerturbedRSM[x][y]<<endl;
-
 		}
 	}
 	Info<< nl;

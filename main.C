@@ -22,7 +22,7 @@ int main()
 	symmTensor perturbed_uiuj[5];
 	symmTensor perturbed_Sij[5];
 
-	unsigned short i, x, y;
+	label i, x, y;
 	/* newAij could be any name and passed by reference by calling "EigenSpace" function
 	   Note newAij must be exactly same as defined in the Numerics.H otherwise an linking
 	   error will be generated */
@@ -45,8 +45,11 @@ int main()
 	Info<<"*********** Start reading anisotropy tensor in each cell **************\n\n";
 	for (i = 1; i < 5; i++)
 	{
-		Aij[i] = {0.6592491, 0.04143975, 0, -0.3259158, 0, -0.333333};
+		//Aij[i] = {0.6592491, 0.04143975, 0, -0.3259158, 0, -0.333333};
+		Aij[i] = {0.00072667, 0, 0, 0.00072667, 0, 0.00072667};
+
 		Rij[i] = {0.0179, 7.4577e-4, 0, 1.3349e-4, 0, 0};
+		//Rij[i] = {0.00072667, 0, 0, 0.00072667, 0, 0.00072667};
 		//Aij[i] = {1, 1, -1, 1, 2, 0, -1, 0, 5};
 		//Aij[i] = {3, -2, 4, -2, 6, 2, 4, 2, 3};
 	}

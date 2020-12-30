@@ -11,7 +11,7 @@ Numerics::Numerics(void)//try to remove void later!
     unsigned short i,j;
     
     Info<<"C*********************** Minghan is in constructor Numerics (unsigned short nDim) ***************************C\n";
-    Info<<"nDim= "<<nDim<<endl;
+    Info<<"nDim= "<<nDim<<endl;//nDim is 3 for 3x3 matrix
    
     /* --- Initializing variables for the UQ methodology --- */
     m_delta = NULL;
