@@ -20,7 +20,7 @@ class Numerics
         double *m_Eig_Val, *m_Barycentric_Coord, *m_New_Coord; //1D array
  
         const unsigned short nDim = 3;//nDim could be 2 or 3. However for research it should always be 3
-        bool comment = false;
+        //bool comment = false;
       protected:
       
         /*constructor*/

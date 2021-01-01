@@ -71,7 +71,6 @@ namespace Foam{//specifies the Foam namespace for restricted scopes
 UQ::UQ(scalar& _k, scalar& _nut, symmTensor& _Rij, label& _celli)
 	:m_turb_ke(0), m_e(0, 0, 0), m_ev(0,0,0,0,0,0,0,0,0) //MyUQ members initializer
 {
-	unsigned short i,j,k;
 
 
 	m_turb_ke = _k;//"turb_ke" is not a alias therefore must be declared in MyUQ.H file
@@ -87,100 +86,6 @@ UQ::UQ(scalar& _k, scalar& _nut, symmTensor& _Rij, label& _celli)
  	m_MeanReynoldsStress[2][1] = _Rij[4];
  	m_MeanReynoldsStress[2][2] = _Rij[5];
 
-	/********************************* Check initial values of members  ***********************************/
-	if(comment)
-	{
-		Info<<"Check member initializer in MyUQ.C\n\n";
-		Info<<"m_e.z() initializer= "  		<<	m_e.z()			<<endl;
-		Info<<"m_ev.yz() initializer= "		<<	m_ev.yz()		<<endl;
-		Info<<"m_turb_ke initializer= "		<<	m_turb_ke		<<endl;
-
-		Info<<nl;
-	
-		
-
-		for (i = 0; i < 2; i++)
-		{
-			Info<<"m_Barycentric_Coord_init["<<i<<"]= "<<m_Barycentric_Coord[i]<<endl;
-			Info<<"m_New_Coord_init["<<i<<"]= "<<m_New_Coord[i]<<endl;
-		}
-
-		Info<<nl;
-
-		for (i = 0; i < 3; i++)
-		{
-			if (i == 0)
-			{
-				for (k = 0; k < 3; k++)
-				{
-					Info<<"m_Eig_Val_init["<<k<<"]= " <<m_Eig_Val[i]<<endl; 
-				}
-
-				Info<<nl;
-
-			}	
-
-			for (j = 0; j < 3; j++)
-			{
-
-					Info<<"m_MeanReynoldsStress_init["<<i<<"]["<<j<<"]= "<<m_MeanReynoldsStress[i][j]<<
-					"  m_PerturbedStrainRate_init["<<i<<"]["<<j<<"]= "<<m_PerturbedStrainRate[i][j]<<endl;
-			}
-		}
-	/********************************* End  ***********************************/
-
-
-
-		Info<<"C*********************** UQ methodology start here ***************************C\n";
-		Info<<"C		**************************************                        C\n";                           
-		Info<<"C			***************************                           C\n";
-		Info<<"C				*********                                     C\n";
-		Info<<"C**************** "<<"celli= "<<_celli<<" Setting eigenvectors in square matrix *************C\n\n";
-
-		Info<<"turbulence kinetic energy= "<< _k <<
-		" _nut= "<<_nut<<endl;
-		Info<<"_Rij[5]+6= "<<_Rij[0]<<" + "<<"1= "<<_Rij[0] + 1<<endl;
-
-		Info<<nl;
-
-		for (i = 0; i < 6; i++)
-		{
-			Info<<"Rij["<<i<<"]= "<<_Rij[i]<<endl;
-		}
-
-
-		
-		Info<< nl;
-
-		for (i = 0; i < 3; i++)
-			for (j = 0; j < 3; j++)
-				Info<<"m_MeanReynoldsStress_OF["<<i<<"]["<<j<<"]= "<<m_MeanReynoldsStress[i][j]<<endl;
-
-		Info<< nl;
-
-		/* The following block of code will disappear in the final implementation
-		and will be replaced with calculated anisotropy tensor */
-		/*************************** Start ******************************************/   
-		//	Aij[0] = {1,0,-4,0,5,4,-4,4,3};//to read in fields
-
-
-		//	//read in Reynold stress field
-		//	Info<<"*********** Start reading anisotropy tensor in each cell **************\n\n";
-		//	for ( int i = 1; i < 5; i++)
-		//	{
-		//		Aij[i] = {0.6592491, 0.04143975, 0, 0.04143974, -0.3259158, 0, 0, 0, -0.333333};
-		//		//Aij[i] = {1, 1, -1, 1, 2, 0, -1, 0, 5};
-		//		//Aij[i] = {3, -2, 4, -2, 6, 2, 4, 2, 3};
-		//		Info<<"i= "<<i-1<<" Aij= "<<Aij[i-1]<<Aij[i-1].row(1)<<nl;
-		//		if(i==4)
-		//		{
-		//			Info<<"i= "<<i<<" Aij= "<<Aij[i]<<=Aij[i].row(1)<<"\n\n";
-
-		//		}
-		//	}
-		//	Info<<"*********** End ********************************************************\n\n"<<endl;
-		/*************************** End ******************************************/	
-	}
 }
 
 
@@ -199,14 +104,6 @@ void UQ::EigenSpace (symmTensor& m_newBij_OF, symmTensor& m_newuiuj_OF, symmTens
 
 	double tmp_ev_sole[9];
 
-	if(comment)
-	{
-
-		Info<< "_Bij_OF= "<<_Bij<<endl;//calculated in turbulence model and passed to MyUQ.C
-
-		Info<<nl;
-			
-	}
 		m_e = eigenValues(_Bij);//Note here "eigenValues" is the intrinsic function
 								   //offered by OpenFoam 
 		m_ev = eigenVectors(_Bij);
@@ -237,12 +134,6 @@ void UQ::EigenSpace (symmTensor& m_newBij_OF, symmTensor& m_newuiuj_OF, symmTens
 			{
 				m_Eig_Vec[x][y] 	= tmp_ev_sole[y+count];
 				m_New_Eig_Vec[x][y] = tmp_ev_sole[y+count];
-
-				if(comment)
-				{
-					Info << "m_Eig_Vec["<<x<<"]["<<y<<"]= "<<m_New_Eig_Vec[x][y] <<endl;   
-
-				}
 			}
 		}
 
@@ -250,11 +141,7 @@ void UQ::EigenSpace (symmTensor& m_newBij_OF, symmTensor& m_newuiuj_OF, symmTens
 										  //be compatible with the calculated eigenvalues, i.e. eigenValues(en_inv[i])
 
 		//std::sort(m_Eig_Val, m_Eig_Val+3, std::greater<double>());
-		if(comment)
-		{
-			Info<< "celli= "<<_celli<<" m_Eig_Val[0]= " << m_Eig_Val[0]<<" m_Eig_Val[1]= "<<m_Eig_Val[1]<<" m_Eig_Val[2]= "<<m_Eig_Val[2]<<endl;	
-			Info<<"******************************** End **********************************************\n\n"<<endl;
-		}
+
 	
 		/* The following block of code verifies the methodology that was implemented to recompose the original matrix from 
 		   its eigenvectors and eigenvalues (from CS point of view since variables m_B_ij, m_Eig_Vec, m_Eig_Val, etc are stored on heap
@@ -274,13 +161,6 @@ void UQ::EigenSpace (symmTensor& m_newBij_OF, symmTensor& m_newuiuj_OF, symmTens
 		Info<<"******************************** End **********************************************\n\n"<<endl;*/
 
 
-		if(comment)
-		{
-			
-			Info<<"**************** "<<"celli= "<<_celli<< " Start calculating Perturbed anisotropy tensor ********************\n";
-			Info<<"--------------------------------------------------------------------------------------------\n\n\n";
-
-		}
 
 		PerturbedBij(m_newB_ij, m_MeanPerturbedRSM, m_PerturbedStrainRate);//perturbed anisotropy matrix at an individual cell is returned 
 		m_newBij_OF = {m_newB_ij[0][0], m_newB_ij[0][1], m_newB_ij[0][2], 
@@ -295,31 +175,6 @@ void UQ::EigenSpace (symmTensor& m_newBij_OF, symmTensor& m_newuiuj_OF, symmTens
 	
 		m_newSij_OF  = {m_PerturbedStrainRate[0][0], m_PerturbedStrainRate[0][1], m_PerturbedStrainRate[0][2],
 						m_PerturbedStrainRate[1][1], m_PerturbedStrainRate[1][2], m_PerturbedStrainRate[2][2]};
-
-		if(comment)
-		{
-			Info <<"******************************* Summary Start *******************************\n"<< endl;
-			/* The following for loops are created to help check the outputted results using the UQ methodology */															 
-			for (x = 0; x < 3; x++)//this for loop is created to test if the perturbed anisotropy matrix is returned correctly
-				for (y = 0; y < 3; y++)
-					Info<<"m_newB_ij_EigenSpace"<<"["<< x <<"]"<<"["<<y<<"]= "<< m_newB_ij[x][y]<<endl;  
-			
-			Info<< nl;
-
-			for (x = 0; x < 3; x++)//this for loop is created to test if the perturbed mean RSM matrix is returned correctly
-				for (y = 0; y < 3; y++)
-					Info<<"m_MeanPerturbedRSM_EigenSpace"<<"["<< x <<"]"<<"["<<y<<"]= "<< m_MeanPerturbedRSM[x][y]<<endl;  
-		
-			Info<< nl;	
-
-			for (x = 0; x < 3; x++)//this for loop is created to test if the perturbed StrainRate matrix is returned correctly
-				for (y = 0; y < 3; y++)
-					Info<<"m_PerturbedStrainRate_EigenSpace"<<"["<< x <<"]"<<"["<<y<<"]= "<< m_PerturbedStrainRate[x][y]<<endl;  
-
-
-			Info<<"******************************** Summary End **********************************************\n";
-			Info<<"******************************** End ******************************************************\n\n"<<endl;
-		}
 }
 
 void UQ::PerturbedBij(double** m_newB_ij, double** m_MeanPerturbedRSM, double** m_PerturbedStrainRate)
@@ -349,15 +204,6 @@ void UQ::PerturbedBij(double** m_newB_ij, double** m_MeanPerturbedRSM, double** 
 		tmp_c1c = m_Eig_Val[2] - m_Eig_Val[1];	
 		tmp_c2c = 2.0*(m_Eig_Val[1] - m_Eig_Val[0]);
 		tmp_c3c = 3.0*m_Eig_Val[0] + 1.0;	
-	
-	if(comment)
-	{
-		
-		Info<< "++++++++++++++ Start to get the BASELINE EigenValues ++++++++++++++\n";  
-		Info<< "c1c= "<<tmp_c1c<<" c2c= "<<tmp_c2c<<" c3c= "<<tmp_c3c<<endl;
-		Info<< "m_Eig_Val[0]= "<<m_Eig_Val[0]<<" m_Eig_Val[1]= "<<m_Eig_Val[1]<<" m_Eig_Val[2]= "<<m_Eig_Val[2]<<endl;
-
-	}
 
 	
 /* define barycentric triangle corner points */
@@ -374,22 +220,11 @@ void UQ::PerturbedBij(double** m_newB_ij, double** m_MeanPerturbedRSM, double** 
   /* define barycentric coordinates for baseline prediction */
 	m_Barycentric_Coord[0] = m_Corners[0][0] * tmp_c1c + m_Corners[1][0] * tmp_c2c + m_Corners[2][0] * tmp_c3c;
 	m_Barycentric_Coord[1] = m_Corners[0][1] * tmp_c1c + m_Corners[1][1] * tmp_c2c + m_Corners[2][1] * tmp_c3c;
-	
-	if(comment)
-	{
-		
-		Info<<"Bary_Coord[0]= "<<m_Barycentric_Coord[0]<<" Bary_Coord[1]= "<<m_Barycentric_Coord[1]<<endl;  
-		Info<< "++++++++++++++++++++ End BASELINE Eigenvalues ++++++++++++++++++++\n\n"<<endl; 
 
-	}
 
  /* perturbation at 1c, 2c, or 3c state: Only one of these three cases is required 
  therefore [2] for x and y later may change it to if statements see SU2 */
-	if(comment)
-	{
 
-		Info<< "+++++++++++++++ Start to get the perturbed Results! +++++++++++++++\n"; 
-	}
 	//1c state
 	//m_New_Coord[0] = m_Corners[0][0];
 	//m_New_Coord[1] = m_Corners[0][1];
@@ -398,11 +233,6 @@ void UQ::PerturbedBij(double** m_newB_ij, double** m_MeanPerturbedRSM, double** 
   	m_New_Coord[0] = m_Corners[1][0];
 	m_New_Coord[1] = m_Corners[1][1];
 	
-	if(comment)
-	{
-
-		Info<<"New_Coord[0]= "<<m_New_Coord[0]<<" New_Coord[1]= "<<m_New_Coord[1]<<endl;  
-	}
 	
 	//3c state
 	//m_New_Coord[0] = m_Corners[2][0];
@@ -419,11 +249,6 @@ void UQ::PerturbedBij(double** m_newB_ij, double** m_MeanPerturbedRSM, double** 
 
 	m_Barycentric_Coord[1] = m_Barycentric_Coord[1] + (uq_delta_b)*(m_New_Coord[1] - m_Barycentric_Coord[1]);
 	  
-	if(comment)
-	{
-
-		Info<<"Bary_Coord_perturb[0]= "<<m_Barycentric_Coord[0]<<" Bary_Coord_perturb[1]= "<<m_Barycentric_Coord[1]<<endl;  
-	}  
 
   
 
@@ -436,33 +261,10 @@ void UQ::PerturbedBij(double** m_newB_ij, double** m_MeanPerturbedRSM, double** 
 	m_Eig_Val[1] = 0.5*tmp_c2c + m_Eig_Val[0];
 	m_Eig_Val[2] = tmp_c1c + m_Eig_Val[1];
   	 
-
-	if(comment)
-	{
-		
-		Info<< "c1c_perturb= "<<tmp_c1c<<" c2c_perturb= "<<tmp_c2c<<" c3c_perturb= "<<tmp_c3c<<endl;
-		Info<< "m_Eig_Val_perturb[0]= "<<m_Eig_Val[0]<<
-			" m_Eig_Val_perturb[1]= "<<m_Eig_Val[1]<<
-			" m_Eig_Val_perturb[2]= "<<m_Eig_Val[2]<<"\n"<<endl;
-
-	} 
 	
 
 
 	EigenRecomposition(m_newB_ij, m_New_Eig_Vec, m_Eig_Val, n);
-	
-	if(comment)
-	{
-		
-		for (x = 0; x < 3; x++)
-			for (y = 0; y < 3; y++)
-				//Info<<"m_B_ij"<<"["<< x <<"]"<<"["<<y<<"]= "<< m_B_ij[x][y]<<endl; 
-				//Info<<"m_NewEig_Vec"<<"["<< x <<"]"<<"["<<y<<"]= "<<m_New_Eig_Vec[x][y]<<endl;
-				Info<<"m_newB_ij_PertBij"<<"["<< x <<"]"<<"["<<y<<"]= "<< m_newB_ij[x][y]<<endl; 
-		
-		Info << nl;
-
-	}
 
 	
 
@@ -482,36 +284,11 @@ void UQ::PerturbedBij(double** m_newB_ij, double** m_MeanPerturbedRSM, double** 
 			m_MeanPerturbedRSM[x][y] = 2.0 * m_turb_ke * (m_newB_ij[x][y] + 1.0/3.0 * m_delta3[x][y]);
 			m_MeanPerturbedRSM[x][y] = m_MeanReynoldsStress[x][y] + uq_urlx*(m_MeanPerturbedRSM[x][y] - m_MeanReynoldsStress[x][y]);			//(1)
 			
-			if(comment)
-			{	
-				Info<<"m_MeanPerturbedRSM_PertBij["<<x<<"]["<<y<<"]= "<<m_MeanPerturbedRSM[x][y]<<
-				" m_MeanReynoldsStress_PertBij["<<x<<"]["<<y<<"]= "<<m_MeanReynoldsStress[x][y]<<endl;												//(2)
-			
-			}
 		}
-	}
-
-	if(comment)
-	{
-
-		Info << nl;
 	}
 
 	SetPerturbedStrainMag(m_MeanPerturbedRSM, m_PerturbedStrainRate);
 
-	if(comment)
-	{
-		
-		Info << nl;
-
-		for (x = 0; x < 3; x++)
-			for (y = 0; y < 3; y++)
-				Info<<"m_PerturbedStrainRate_PertBij"<<"["<< x <<"]"<<"["<<y<<"]= "<< m_PerturbedStrainRate[x][y]<<endl; 
-
-		Info << nl;
-		Info<< "++++++++++++++++++++++++++++ End perturbed results ++++++++++++++++++++++++++++ \n\n"<<endl; 
-
-	}
 }
 
 
@@ -525,11 +302,6 @@ void UQ::SetPerturbedStrainMag(double** m_MeanPerturbedRSM, double** m_Perturbed
 	// <Sij>* = -aij*/(2*nut)			   (2)	
 
   	/* compute perturbed strain rate tensor */
-	if(comment)
-	{
-		Info<<"----------Start inside SetPerturbedStrainMag function ----------\n\n";  
-
-	}
 
 	for (x = 0; x < nDim; x++)
 	{
@@ -540,24 +312,8 @@ void UQ::SetPerturbedStrainMag(double** m_MeanPerturbedRSM, double** m_Perturbed
 
 
 			m_PerturbedStrainRate[x][y] = - m_PerturbedStrainRate[x][y] / (2 * m_nut);				//(2)
-
-			if(comment)
-			{
-
-				Info<<"m_PerturbedStrainRate["<<x<<"]["<<y<<"]= "<<m_PerturbedStrainRate[x][y]<<
-				" m_MeanPerturbedRSM["<<x<<"]["<<y<<"]= "<<m_MeanPerturbedRSM[x][y]<<endl;
-			
-			}
 			
 		}
-	}
-
-	if(comment)
-	{
-		Info<< nl;
-
-		Info<<"----------End inside SetPerturbedStrainMag function ----------\n\n";  
-
 	}
 
 }

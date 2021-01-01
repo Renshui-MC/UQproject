@@ -9,13 +9,7 @@ Numerics::Numerics(void)//try to remove void later!
 {
 
     unsigned short i,j;
-    if(comment)
-    {
 
-        Info<<"C*********************** Minghan is in constructor Numerics (unsigned short nDim) ***************************C\n";
-        Info<<"nDim= "<<nDim<<endl;//nDim is 3 for 3x3 matrix
-    
-    }
     /* --- Initializing variables for the UQ methodology --- */
     m_delta = NULL;
     m_delta3 = NULL;
@@ -108,10 +102,6 @@ Numerics::Numerics(void)//try to remove void later!
 
 Numerics::~Numerics(void)
 {
-    if(comment)
-    {
-        Info<<"C*********************** Minghan is in Destructor ***************************C\n\n\n";
-    }
 
     if (m_delta != NULL)
     {
